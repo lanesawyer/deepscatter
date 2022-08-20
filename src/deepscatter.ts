@@ -5,7 +5,7 @@ import merge from 'lodash.merge';
 import Zoom from './interaction';
 import { ReglRenderer } from './regl_rendering';
 import { Dataset } from './Dataset';
-import { APICall } from './types';
+import { APICall, DownloadState } from './types';
 import { StructRowProxy } from 'apache-arrow';
 
 const base_elements = [
@@ -191,7 +191,7 @@ export default class Scatterplot {
           ctx.lineWidth = 8 / Math.sqrt(depth);
           ctx.globalAlpha = 0.33;
           ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-          if (tile.download_state !== 'Unattempted') {
+          if (tile.download_state !== DownloadState.Unattempted) {
             ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
           }
           ctx.globalAlpha = 1;

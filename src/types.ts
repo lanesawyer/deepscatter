@@ -157,6 +157,13 @@ export type APICall = {
   encoding: Encoding
 } & DataSpec;
 
+export enum DownloadState {
+  Unattempted,
+  InProgress,
+  Complete,
+  Failed,
+}
+
 export function isOpChannel(input: Channel): input is OpChannel {
   return (input as OpChannel).op !== undefined;
 }

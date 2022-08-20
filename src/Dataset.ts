@@ -9,7 +9,7 @@ import * as Comlink from 'comlink';
 //@ts-ignore
 import TileWorker from './tileworker.worker.js?worker&inline';
 
-import { APICall } from './types';
+import { APICall, DownloadState } from './types';
 import Scatterplot from './deepscatter';
 import { StructRowProxy, Table } from 'apache-arrow';
 type Key = string;
@@ -75,7 +75,7 @@ export abstract class Dataset<T extends Tile> {
         continue;
       }
       // Only create children for downloaded tiles.
-      if (current.download_state == 'Complete') {        
+      if (current.download_state == DownloadState.Complete) {        
         stack.push(...current.children);
       }
     }
@@ -183,7 +183,7 @@ export class QuadtileSet extends Dataset<QuadTile> {
         // Just depth.
         return 1 / tile.codes[0];
       }
-      if (tile.download_state === 'Unattempted') {
+      if (tile.download_state === DownloadState.Unattempted) {
         const distance = check_overlap(tile, bbox);
         scores.push([distance, tile, bbox]);
       }

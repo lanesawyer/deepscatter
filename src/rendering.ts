@@ -119,7 +119,7 @@ export class Renderer {
   public _zoom : Zoom;
   public _initializations : Promise<any>[];
   public render_props : RenderProps;
-  constructor(selector, tileSet, scatterplot) {
+  constructor(selector: string, tileSet, scatterplot) {
     this.scatterplot = scatterplot;
     this.holder = select(selector);
     this.canvas = select(this.holder.node().firstElementChild);

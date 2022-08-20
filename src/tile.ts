@@ -7,6 +7,7 @@ import { tableFromIPC, Table, RecordBatch } from 'apache-arrow';
 import TileWorker from './tileworker.worker.js?worker&inline';
 import type { Dataset, QuadtileSet } from './Dataset';
 import Scatterplot from './deepscatter';
+import { DownloadState } from './types';
 type MinMax = [number, number];
 
 export type Rectangle = {
@@ -27,7 +28,7 @@ export abstract class Tile {
   public max_ix  = -1;
   readonly key : string; // A unique identifier for this tile.
   promise : Promise<void>;
-  download_state : string;
+  download_state : DownloadState;
   public _batch? : RecordBatch;
   parent: this | null;
   _table_buffer?: ArrayBuffer;
@@ -44,7 +45,7 @@ export abstract class Tile {
   constructor(dataset : QuadtileSet) {
     // Accepts prefs only for the case of the root tile.
     this.promise = Promise.resolve();
-    this.download_state = 'Unattempted';
+    this.download_state = DownloadState.Unattempted;
     this.key = String(Math.random());
     this.parent = null;
     this.dataset = dataset;
@@ -322,12 +323,13 @@ export class QuadTile extends Tile {
 
     // new: must include protocol and hostname.
     const url = `${this.url}/${this.key}.feather`;
-    this.download_state = 'In progress';
+    this.download_state = DownloadState.InProgress;
 
     this._download = this.tileWorker
       .fetch(url, {})
       .then(([buffer, metadata, codes]): Table<any> => {
-        this.download_state = 'Complete';
+        this.download_state = DownloadState.Complete;
+
         // metadata is passed separately b/c I dont know
         // how to fix it on the table in javascript, just python.
         this._table_buffer = buffer;
@@ -346,8 +348,8 @@ export class QuadTile extends Tile {
         this.local_dictionary_lookups = codes;
         return this.record_batch;
       })
-      .catch((error) => {        
-        this.download_state = 'Failed';
+      .catch((e) => {        
+        this.download_state = DownloadState.Failed;
         console.error(`Error: Remote Tile at ${this.url}/${this.key}.feather not found.
         
         `);
@@ -358,7 +360,7 @@ export class QuadTile extends Tile {
 
   get children() : Array<this> {
     // create or return children.
-    if (this.download_state !== 'Complete') {
+    if (this.download_state !== DownloadState.Complete) {
       return [];
     }
     if (this._children.length < this.child_locations.length) {
@@ -399,7 +401,7 @@ export class ArrowTile extends Tile {
     super(dataset);
     this.full_tab = table;
     this._batch = table.batches[batch_num];
-    this.download_state = 'Complete';
+    this.download_state = DownloadState.Complete;
     this.batch_num = batch_num;
     this._extent = {
       x: extent(this._batch.getChild('x')),
