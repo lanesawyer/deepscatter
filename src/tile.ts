@@ -30,9 +30,9 @@ export abstract class Tile {
   promise : Promise<void>;
   download_state : DownloadState;
   public _batch? : RecordBatch;
-  parent: this | null;
+  parent?: Tile;
   _table_buffer?: ArrayBuffer;
-  public _children : Array<this> = [];
+  public _children : Array<Tile> = [];
   public _highest_known_ix? : number;
   public _min_ix? : number;
   public _max_ix? : number;
@@ -47,7 +47,7 @@ export abstract class Tile {
     this.promise = Promise.resolve();
     this.download_state = DownloadState.Unattempted;
     this.key = String(Math.random());
-    this.parent = null;
+    this.parent = undefined;
     this.dataset = dataset;
     if (dataset === undefined) {
       throw new Error('No dataset provided');
@@ -63,7 +63,7 @@ export abstract class Tile {
   }
 
   download() {
-    throw new Error('Not implemented');
+    return new Promise(() => { throw new Error('Not implemented'); });
   }
 
   is_visible(max_ix : number, viewport_limits : Rectangle ) : boolean {
@@ -185,7 +185,6 @@ export abstract class Tile {
     if (this.parent) {
       return this.parent.max_ix + 1;
     }
-    return;
   }
 
   async schema() {
@@ -227,7 +226,7 @@ export abstract class Tile {
           extent: []
         });
       }
-      if (type && type.dictionary) {
+      if (type?.dictionary) {
         attributes.push({
           name,
           type: 'dictionary',
@@ -235,14 +234,14 @@ export abstract class Tile {
           extent: [-2047, this.record_batch.getChild(name).data[0].dictionary.length - 2047],
         });
       }
-      if (type && type.typeId == 8) {
+      if (type?.typeId == 8) {
         attributes.push({
           name,
           type: 'date',
           extent: extent(this.record_batch.getChild(name).data[0].values),
         });
       }
-      if (type && type.typeId == 3) {
+      if (type?.typeId == 3) {
         attributes.push({
           name, type: 'float', extent: extent(this.record_batch.getChild(name).data[0].values),
         });
@@ -275,7 +274,7 @@ export abstract class Tile {
   }
 
   get root_extent() : Rectangle {
-    if (this.parent === null) {
+    if (this.parent === undefined || this.parent === null) {
       // infinite extent
       return {
         x: [Number.MIN_VALUE, Number.MAX_VALUE],
@@ -289,18 +288,17 @@ export abstract class Tile {
 export class QuadTile extends Tile {
   url : string;
   key : string;
-  public _children : Array<this> = [];
+  public _children : Array<QuadTile> = [];
   codes : [number, number, number];
   _already_called = false;
   public child_locations : string[] = [];
-  constructor(base_url : string, key : string, parent : null | this, dataset : QuadtileSet) {
+  constructor(base_url : string, key : string, dataset : QuadtileSet, parent?: Tile) {
     super(dataset);
     this.url = base_url;
     this.parent = parent;
     this.key = key;
     const [z, x, y] = key.split('/').map((d) => Number.parseInt(d));
     this.codes = [z, x, y];
-    this.class = new.target;
   }
 
 
@@ -358,7 +356,7 @@ export class QuadTile extends Tile {
     return this._download;
   }
 
-  get children() : Array<this> {
+  get children() : Array<QuadTile> {
     // create or return children.
     if (this.download_state !== DownloadState.Complete) {
       return [];
@@ -366,7 +364,7 @@ export class QuadTile extends Tile {
     if (this._children.length < this.child_locations.length) {
       for (const key of this.child_locations) {
         //this._children.push(key)
-        this._children.push(new this.class(this.url, key, this, this.dataset));
+        this._children.push(new QuadTile(this.url, key, this.dataset, this));
       }
     }
     // }
@@ -397,7 +395,7 @@ export class QuadTile extends Tile {
 export class ArrowTile extends Tile {
   batch_num: number;
   full_tab: Table;
-  constructor(table: Table, dataset : Dataset<this>, batch_num : number, plot: Scatterplot, parent = null) {
+  constructor(table: Table, dataset : Dataset<ArrowTile>, batch_num : number, plot: Scatterplot, parent?: Tile) {
     super(dataset);
     this.full_tab = table;
     this._batch = table.batches[batch_num];

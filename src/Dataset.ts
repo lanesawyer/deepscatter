@@ -154,7 +154,7 @@ export class QuadtileSet extends Dataset<QuadTile> {
 
   constructor(base_url : string, prefs: APICall, plot: Scatterplot) {
     super(plot);
-    this.root_tile = new QuadTile(base_url, '0/0/0', null, this);
+    this.root_tile = new QuadTile(base_url, '0/0/0', this);
   }
 
   get ready() {
