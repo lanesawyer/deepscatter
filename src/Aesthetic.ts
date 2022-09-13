@@ -367,6 +367,11 @@ abstract class Aesthetic {
       this._range = encoding.range;
     }
 
+    if (encoding.transform && encoding.field === 'color') {
+      this.encode_something(encoding.field, this.domain);
+      this.post_to_regl_buffer();
+    }
+
     this._transform = encoding.transform || undefined;
   }
 
@@ -379,6 +384,15 @@ abstract class Aesthetic {
     for (let i = 0; i < texture_size; i += 1) {
       values[i] = this.scaleFunc(i);
     }
+  }
+
+  encode_something(field: string, range : number[]) {
+    const { column } = this;
+    const { texture_size } = this.aesthetic_map;
+    const dvals = column.data[0].dictionary.toArray();
+    console.log(field);
+    // TODO: Get color for specific item and set it instead of the 255
+    this.texture_buffer.set(arange(texture_size).map((i) => 255));
   }
 
   arrow_column() : Vector {
@@ -665,6 +679,7 @@ class Color extends Aesthetic {
     } else if (range.length === this.aesthetic_map.texture_size * 4) {
       this.texture_buffer.set(range);
     } else if (range.length > 0 && range[0].length > 0 && range[0].length === 3) {
+        console.log(range);
       // manually set colors.
       const r = arange(palette_size).map((i) => {
         const [r, g, b] = range[i % range.length];

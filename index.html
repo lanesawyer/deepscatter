@@ -51,9 +51,8 @@
     "click_function": "select('#ident').html(JSON.stringify(datum, undefined, 2))",
     "encoding": {
       "color": {
-        "field": "class",
-        "range": "category10",
-        "domain": [-2047, 2047] 
+        field: "color",
+        transform: "literal"
       },
       "x": {
         field: "x",
@@ -66,10 +65,6 @@
       "y": {
         field: "y", 
         transform: "literal"
-      },
-      "filter": {
-        field: "class",
-        lambda: "d => d !== 'Strawberry'"
       },
       "size": {
         "field": "quantity",

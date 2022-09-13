@@ -93,7 +93,11 @@ export type ConstantColorChannel = ConstantChannel & {
   constant? : [number, number, number]
 };
 
-export type ColorChannel = BasicColorChannel | CategoricalColorChannel | ConstantColorChannel;
+export type FieldColorChannel = CategoricalChannel & {
+  color: string;
+};
+
+export type ColorChannel = BasicColorChannel | CategoricalColorChannel | ConstantColorChannel | FieldColorChannel;
 export type Channel = BasicChannel | string | ConstantChannel | OpChannel | LambdaChannel;
 
 export type OpArray = [
